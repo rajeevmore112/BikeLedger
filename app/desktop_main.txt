@@ -14,28 +14,19 @@
 # pyright: reportAttributeAccessIssue=false
 # =================================================================
 
-# ---------- MOBILE PREVIEW ----------
-from kivy.config import Config
-from kivy.core.window import Window
-from kivy.metrics import dp
-
-Config.set("input", "mouse", "mouse,multitouch_on_demand")
-Window.size = (360, 780)
-
-# ---------- KIVY / KIVYMD ----------
+from kivymd.uix.button import MDIconButton
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.card import MDCard
 from kivymd.uix.label import MDLabel
-from kivymd.uix.button import MDFlatButton, MDIconButton
+from kivymd.uix.button import MDFloatingActionButton, MDFlatButton
 from kivymd.uix.scrollview import MDScrollView
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.textfield import MDTextField
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.screenmanager import ScreenManager
 
-# ---------- APP ----------
 from app.database import Database
 from app.constants import MOD_CATEGORIES
 from app.ui.widgets import entry_card, summary_card
@@ -43,6 +34,8 @@ from app.ui.dialogs import add_entry_dialog
 
 
 class BikesPassbook(MDApp):
+
+    # ================= APP =================
 
     def build(self):
         self.theme_cls.theme_style = "Dark"
@@ -60,15 +53,16 @@ class BikesPassbook(MDApp):
 
     def build_main_screen(self):
         self.main_screen = MDScreen(name="main")
+
         root = MDBoxLayout(orientation="vertical")
 
-        # ---------- SCROLL CONTENT ----------
+        # ---------- SCROLL CONTAINER ----------
         scroll = MDScrollView()
         content = MDBoxLayout(
             orientation="vertical",
-            spacing=dp(16),
+            padding=16,
+            spacing=16,
             size_hint_y=None,
-            padding=(dp(16), dp(16), dp(16), dp(110)),  # space for bottom bar
         )
         content.bind(minimum_height=content.setter("height"))
         scroll.add_widget(content)
@@ -79,110 +73,140 @@ class BikesPassbook(MDApp):
             MDLabel(
                 text="BikeLedger",
                 halign="center",
-                font_style="H5",
+                font_style="H4",
                 size_hint_y=None,
-                height=dp(40),
+                height=52,
             )
         )
 
-        # ---------- MAINTENANCE CARD ----------
+        # ---------- SCHEDULE (HEADER ONLY) ----------
         schedule_card = MDCard(
+            radius=[20],
             elevation=3,
-            padding=dp(16),
+            padding=16,
             md_bg_color=(0.12, 0.16, 0.22, 1),
             size_hint_y=None,
-            height=dp(72),
+            height=72,
         )
 
-        row = MDBoxLayout(spacing=dp(12))
-        row.add_widget(MDLabel(text="Maintenance Records", font_style="Subtitle1"))
-        row.add_widget(MDBoxLayout(size_hint_x=1))
-        row.add_widget(
+        schedule_container = MDBoxLayout(
+            orientation="horizontal",
+            spacing=12,
+        )
+
+        schedule_container.add_widget(
+            MDLabel(
+                text="Maintenance Records",
+                font_style="Subtitle1",
+                halign="left",
+            )
+        )
+        
+        schedule_container.add_widget(
+            MDBoxLayout(size_hint_x=1)
+        )
+
+        schedule_container.add_widget(
             MDIconButton(
                 icon="pencil-outline",
                 on_release=self.edit_schedule,
             )
         )
 
-        schedule_card.add_widget(row)
+        schedule_card.add_widget(schedule_container)
         content.add_widget(schedule_card)
 
         # ---------- SUMMARY ----------
-        summary = MDBoxLayout(size_hint_y=None, height=dp(110), spacing=dp(12))
-        self.maint_card, self.maint_value = summary_card(
-            "Maintenance", on_release=self.open_maintenance
+        summary = MDBoxLayout(
+            spacing=14,
+            size_hint_y=None,
+            height=120,
         )
-        self.mod_card, self.mod_value = summary_card("Modification")
-        self.total_card, self.total_value = summary_card("Total")
+
+        self.maint_card, self.maint_value = summary_card(
+            "Maintenance Cost", on_release=self.open_maintenance
+        )
+        self.mod_card, self.mod_value = summary_card("Modification Cost")
+        self.total_card, self.total_value = summary_card("Grand Total")
+
         summary.add_widget(self.maint_card)
         summary.add_widget(self.mod_card)
         summary.add_widget(self.total_card)
         content.add_widget(summary)
 
-        # ---------- CATEGORY TITLE ----------
+        # ---------- CATEGORIES ----------
         content.add_widget(
             MDLabel(
-                text="Modifications",
+                text="Modification",
                 font_style="H6",
-                halign="center",
+                theme_text_color="Primary",
                 size_hint_y=None,
-                height=dp(32),
+                height=32,
+                halign="center",
             )
         )
 
-        # ---------- CATEGORY GRID ----------
+        cat_scroll = MDScrollView(size_hint_y=None, height=280)
+
         self.mod_grid = GridLayout(
-            cols=2,
-            spacing=dp(12),
-            padding=dp(8),
+            cols=3,
+            spacing=16,
+            padding=6,
             size_hint_y=None,
         )
         self.mod_grid.bind(minimum_height=self.mod_grid.setter("height"))
-        content.add_widget(self.mod_grid)
 
-        # ---------- BOTTOM BAR ----------
-        bottom_bar = MDBoxLayout(
-            size_hint_y=None,
-            height=dp(88),
-            padding=(dp(16), dp(12)),
-        )
-
-        # pill button layout
-        pill = MDBoxLayout(
-            size_hint=(1, None),
-            height=dp(52),
-            padding=(dp(20), 0),
-            md_bg_color=(0.45, 0.55, 0.6, 1),
-            radius=[dp(26)],
-        )
-
-        pill.bind(on_touch_down=lambda inst, touch:
-                  add_entry_dialog(self) if inst.collide_point(*touch.pos) else None)
-
-        pill.add_widget(
-            MDIconButton(
-                icon="plus",
-                theme_text_color="Custom",
-                text_color=(1, 1, 1, 1),
-                
-            )
-        )
-        pill.add_widget(
-            MDLabel(
-                text="ADD ENTRY",
-                halign="center",
-                valign="middle",
-                theme_text_color="Custom",
-                text_color=(1, 1, 1, 1),
-                font_style="Button",
-            )
-        )
-
-        bottom_bar.add_widget(pill)
+        cat_scroll.add_widget(self.mod_grid)
+        content.add_widget(cat_scroll)
 
         self.main_screen.add_widget(root)
-        self.main_screen.add_widget(bottom_bar)
         self.sm.add_widget(self.main_screen)
+
+        # ---------- FAB ----------
+        self.main_screen.add_widget(
+            MDFloatingActionButton(
+                icon="plus",
+                pos_hint={"right": 0.95, "y": 0.03},
+                on_release=lambda *_: add_entry_dialog(self),
+            )
+        )
+
+    # ================= SCHEDULE EDIT =================
+
+    def edit_schedule(self, *_):
+        field = MDTextField(
+            text=self.get_schedule_text(),
+            multiline=True,
+            size_hint_y=None,
+            height=220,
+        )
+
+        def save(*_):
+            text = field.text.strip()
+            cur = self.conn.cursor()
+            cur.execute(
+                "INSERT OR REPLACE INTO schedule (id, note) VALUES (1, ?)",
+                (text,),
+            )
+            self.conn.commit()
+            dialog.dismiss()
+
+        dialog = MDDialog(
+            title="Edit Maintenance Records",
+            type="custom",
+            content_cls=field,
+            buttons=[
+                MDFlatButton(text="CANCEL", on_release=lambda *_: dialog.dismiss()),
+                MDFlatButton(text="SAVE", on_release=save),
+            ],
+        )
+        dialog.open()
+
+    def get_schedule_text(self):
+        cur = self.conn.cursor()
+        cur.execute("SELECT note FROM schedule WHERE id=1")
+        row = cur.fetchone()
+        return row[0] if row else "No scheduled maintenance yet"
 
     # ================= DATA =================
 
@@ -201,21 +225,22 @@ class BikesPassbook(MDApp):
 
         for category in MOD_CATEGORIES:
             card = MDCard(
-                elevation=2,
+                radius=[22],
+                elevation=4,
                 md_bg_color=(0.14, 0.19, 0.26, 1),
                 size_hint=(1, None),
-                height=dp(96),
-                padding=dp(14),
+                height=96,
+                padding=12,
                 on_release=lambda _, c=category: self.open_category(c),
             )
 
             label = MDLabel(
                 text=category,
-                halign="left",
+                halign="center",
                 valign="middle",
-                font_style="Body1",
+                font_style="Subtitle1",
             )
-            label.bind(width=lambda i, w: setattr(i, "text_size", (w, None)))
+            label.bind(size=label.setter("text_size"))
 
             card.add_widget(label)
             self.mod_grid.add_widget(card)
@@ -233,13 +258,34 @@ class BikesPassbook(MDApp):
             return
 
         screen = MDScreen(name=name)
-        root = MDBoxLayout(orientation="vertical", padding=dp(12), spacing=dp(12))
+        root = MDBoxLayout(orientation="vertical", padding=12, spacing=12)
 
-        top = MDBoxLayout(size_hint_y=None, height=dp(48))
-        top.add_widget(MDIconButton(icon="arrow-left", on_release=self.go_back))
-        top.add_widget(MDLabel(text="Back", valign="middle"))
-        top.add_widget(MDBoxLayout(size_hint_x=1))
-        root.add_widget(top)
+        # ---------- TOP BAR ----------
+        top_bar = MDBoxLayout(
+        orientation="horizontal",
+        spacing=8,
+        size_hint_y=None,
+        height=48,
+        )
+        
+        top_bar.add_widget(
+            MDIconButton(
+                icon="arrow-left",
+                on_release=lambda *_: self.go_back(),
+                )
+            )
+        
+        top_bar.add_widget(
+            MDLabel(
+                text="Back",
+                valign="middle",
+                theme_text_color="Primary",
+                )
+        )
+
+        # Right spacer (visual balance)top_bar.add_widget(MDBoxLayout(size_hint_x=1))
+        top_bar.add_widget(MDBoxLayout(size_hint_x=1))
+        root.add_widget(top_bar)
 
         root.add_widget(
             MDLabel(
@@ -247,12 +293,12 @@ class BikesPassbook(MDApp):
                 font_style="H5",
                 halign="center",
                 size_hint_y=None,
-                height=dp(40),
+                height=48,
             )
         )
 
         scroll = MDScrollView()
-        box = MDBoxLayout(orientation="vertical", spacing=dp(10), size_hint_y=None)
+        box = MDBoxLayout(orientation="vertical", spacing=10, size_hint_y=None)
         box.bind(minimum_height=box.setter("height"))
         scroll.add_widget(box)
         root.add_widget(scroll)
@@ -273,48 +319,10 @@ class BikesPassbook(MDApp):
     def open_maintenance(self, *_):
         self.open_category("Maintenance")
 
-    def go_back(self, *_):
+    def go_back(self):
         self.sm.current = "main"
-
-    # ================= DIALOG =================
-
-    def edit_schedule(self, *_):
-        field = MDTextField(
-            text=self.get_schedule_text(),
-            multiline=True,
-            size_hint_y=None,
-            height=dp(220),
-        )
-
-        dialog = MDDialog(
-            title="Edit Maintenance Records",
-            type="custom",
-            content_cls=field,
-            buttons=[
-                MDFlatButton(text="CANCEL", on_release=lambda *_: dialog.dismiss()),
-                MDFlatButton(
-                    text="SAVE",
-                    on_release=lambda *_: self._save_schedule(field, dialog),
-                ),
-            ],
-        )
-        dialog.open()
-
-    def _save_schedule(self, field, dialog):
-        cur = self.conn.cursor()
-        cur.execute(
-            "INSERT OR REPLACE INTO schedule (id, note) VALUES (1, ?)",
-            (field.text.strip(),),
-        )
-        self.conn.commit()
-        dialog.dismiss()
-
-    def get_schedule_text(self):
-        cur = self.conn.cursor()
-        cur.execute("SELECT note FROM schedule WHERE id=1")
-        row = cur.fetchone()
-        return row[0] if row else ""
 
 
 if __name__ == "__main__":
-    BikesPassbook().run()
+    BikesPassbook().run() 
+
