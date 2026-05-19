@@ -1,26 +1,32 @@
-# BikeLedger 🏍️
+# BikeLedger
 
 BikeLedger is a personal motorcycle maintenance and modification tracking app.
 
-This repository contains **Version 1 (Desktop)** of the application, built using **Python + KivyMD**.
+This repository contains Version 1 of the desktop app, built with Python, KivyMD,
+and SQLite.
 
-## Features (v1)
+## Features
+
 - Track maintenance and modification expenses
-- Categorized modification records
-- SQLite-based local storage
-- Clean dark UI optimized for desktop
-- Manual schedule maintenance notes
+- View category totals and passbook-style entry lists
+- Add, edit, and delete entries
+- Save manual maintenance notes
+- Keep local SQLite backups before destructive changes
+- Use a clean dark UI optimized for a small desktop/mobile-preview window
 
 ## Tech Stack
+
 - Python 3
 - Kivy / KivyMD
 - SQLite
-- Buildozer (Android build in progress)
 
 ## Status
-- ✅ Desktop version stable
-- ⚠️ Mobile UI needs optimization (planned for v2)
+
+- Desktop version is usable
+- Mobile UI polish is planned for a later pass
 
 ## Roadmap
-- v2: Mobile-first UI polish
-- v3: Export, charts, reminders
+
+- Mobile-first layout polish
+- Export and charts
+- Service reminders

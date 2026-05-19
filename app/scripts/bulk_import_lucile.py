@@ -1,8 +1,22 @@
 import sqlite3
 from datetime import datetime
+from os import makedirs
+from os.path import exists, join
+from shutil import copy2
 
 DB_PATH = "passbook.db"
 NOW = datetime.now().isoformat()
+
+
+def create_backup(db_path):
+    if not exists(db_path):
+        return None
+
+    makedirs("backups", exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_path = join("backups", f"passbook_before_bulk_import_{timestamp}.db")
+    copy2(db_path, backup_path)
+    return backup_path
 
 conn = sqlite3.connect(DB_PATH)
 cur = conn.cursor()
@@ -28,7 +42,11 @@ CREATE TABLE IF NOT EXISTS schedule (
 """)
 
 # ================= RESET DATA =================
-print("⚠️ Clearing existing data...")
+backup_path = create_backup(DB_PATH)
+if backup_path:
+    print(f"Backup created: {backup_path}")
+
+print("Clearing existing data...")
 cur.execute("DELETE FROM entries")
 cur.execute("DELETE FROM schedule")
 conn.commit()
@@ -156,7 +174,7 @@ insert_group(aesthetic, "Aesthetic")
 conn.commit()
 conn.close()
 
-print("✅ Lucile data imported cleanly")
+print("Lucile data imported cleanly")
 print("Maintenance: ₹43,414")
 print("Modifications: ₹69,488")
 print("Grand Total: ₹1,12,902")

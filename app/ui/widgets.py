@@ -8,27 +8,42 @@
 from kivymd.uix.card import MDCard
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.label import MDLabel 
-from app.constants import POST_IT_YELLOW # pyright: ignore[reportUnusedImport]
-from app.constants import POST_IT_GREEN # pyright: ignore[reportUnusedImport]
+from kivymd.uix.button import MDIconButton
+from kivy.metrics import dp
 
-def entry_card(title, subtitle):
+from app.constants import ACCENT_TEAL, SURFACE_ALT, TEXT_MUTED, TEXT_PRIMARY
+
+
+def entry_card(title, subtitle, on_edit=None, on_delete=None, accent_color=None):
     title = str(title) if title else "No description"
     subtitle = str(subtitle) if subtitle else ""
+    accent_color = accent_color or ACCENT_TEAL
 
     card = MDCard(
-        padding=12,
-        radius=[16],
-        elevation=1,
+        padding=14,
+        radius=[14],
+        elevation=2,
         size_hint_y=None,
-        height=72,
+        height=86,
+        md_bg_color=SURFACE_ALT,
     )
 
+    row = MDBoxLayout(orientation="horizontal", spacing=8)
+    accent = MDCard(
+        size_hint=(None, 1),
+        width=4,
+        radius=[4],
+        elevation=0,
+        md_bg_color=accent_color,
+    )
     box = MDBoxLayout(orientation="vertical", spacing=2)
 
     box.add_widget(
         MDLabel(
             text=title,
             font_style="Subtitle1",
+            theme_text_color="Custom",
+            text_color=TEXT_PRIMARY,
         )
     )
 
@@ -37,23 +52,48 @@ def entry_card(title, subtitle):
             MDLabel(
                 text=subtitle,
                 font_style="Caption",
-                theme_text_color="Secondary",
+                theme_text_color="Custom",
+                text_color=TEXT_MUTED,
             )
         )
 
-    card.add_widget(box)
+    row.add_widget(accent)
+    row.add_widget(box)
+
+    if on_edit:
+        row.add_widget(
+            MDIconButton(
+                icon="pencil-outline",
+                theme_text_color="Custom",
+                text_color=(0.55, 0.75, 1, 1),
+                on_release=on_edit,
+            )
+        )
+
+    if on_delete:
+        row.add_widget(
+            MDIconButton(
+                icon="delete-outline",
+                theme_text_color="Custom",
+                text_color=(1, 0.45, 0.45, 1),
+                on_release=on_delete,
+            )
+        )
+
+    card.add_widget(row)
     return card
 
 
 
-def summary_card(title, on_release=None):
+def summary_card(title, on_release=None, icon="wallet-outline", accent_color=None):
+    accent_color = accent_color or ACCENT_TEAL
     kwargs = dict(
-        padding=10,
-        radius=[16],
-        elevation=2,
+        padding=(8, 8, 8, 8),
+        radius=[18],
+        elevation=4,
         size_hint=(1, None),
-        height=90,
-        md_bg_color=(0.15, 0.18, 0.25, 1),
+        height=104,
+        md_bg_color=(0.11, 0.145, 0.19, 1),
         
     )
 
@@ -62,23 +102,43 @@ def summary_card(title, on_release=None):
 
     card = MDCard(**kwargs)
 
-    box = MDBoxLayout(orientation="vertical", spacing=4)
+    box = MDBoxLayout(orientation="vertical", spacing=0)
+
+    box.add_widget(
+        MDIconButton(
+            icon=icon,
+            theme_text_color="Custom",
+            text_color=accent_color,
+            size_hint_y=None,
+            height=dp(30),
+            pos_hint={"center_x": 0.5},
+        )
+    )
 
     box.add_widget(
         MDLabel(
             text=title,
             halign="center",
-            theme_text_color="Secondary",
+            font_style="Caption",
+            theme_text_color="Custom",
+            text_color=TEXT_MUTED,
+            size_hint_y=None,
+            height=dp(20),
+            shorten=True,
         )
     )
 
     value_label = MDLabel(
         text="₹0",
         halign="center",
-        font_style="H6",
+        font_style="Subtitle1",
         theme_text_color="Custom",
-        text_color=(0.90, 0.95, 1.00, 1),  # cool light blue
+        text_color=TEXT_PRIMARY,
+        size_hint_y=None,
+        height=dp(42),
+        shorten=True,
     )
+    value_label.bind(width=lambda label, width: setattr(label, "text_size", (width, None)))
 
     box.add_widget(value_label)
     card.add_widget(box)
