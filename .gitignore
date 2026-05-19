@@ -18,6 +18,9 @@ backups/
 Thumbs.db
 
 # Build artifacts (future)
+build/
+dist/
+BikeLedger.spec
 .buildozer/
 *.apk
 *.aab
