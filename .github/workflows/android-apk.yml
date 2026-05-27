@@ -9,6 +9,9 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-22.04
+    env:
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
 
     steps:
       - name: Checkout
@@ -19,24 +22,36 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install system dependencies
+      - name: Install Linux build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            git zip unzip openjdk-17-jdk autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
-            cmake libffi-dev libssl-dev
+            git zip unzip openjdk-17-jdk autoconf automake libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev libffi-dev libssl-dev \
+            cmake gettext build-essential ccache
 
       - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip
-          python -m pip install buildozer cython==0.29.36
+          python -m pip install buildozer==1.5.0 cython==0.29.36 virtualenv
 
       - name: Build debug APK
-        run: buildozer android debug
+        run: |
+          buildozer --version
+          buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: BikeLedger-debug-apk
           path: bin/*.apk
+
+      - name: Upload Buildozer logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildozer-logs
+          path: |
+            .buildozer/**/*.log
+            .buildozer/android/platform/build-*/dists/*/build.log
+          if-no-files-found: ignore
